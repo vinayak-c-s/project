@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Viewer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            
+        }
+
+        #map {
+            width: 100%;
+            height: 70vh;
+        }
+
+        .input-container {
+            margin-left: 30px;
+            margin-top: 5px;
+        }
+
+        .input-container input {
+            margin-right: 10px;
+            
+            margin-bottom: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #searchButton {
+            background-color: white;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #searchButton img {
+            width: 15px;
+            height: 15px;
+            vertical-align: middle;
+            margin-right: 0px;
+            
+        }
+
+        #topCenter {
+            text-align: right;
+            margin-top: 0px;
+        }
+    </style>
+
+</head>
+
+<body>
+    
+    <button class="pushable" onclick="toggleAdmin()" id="adminBtn">
+        <span class="shadow"></span>
+        <span class="edge"></span>
+        <span class="front">
+          Admin Login
+        </span>
+      </button>
+    <div id="inputFields" class="input-container hidden">
+        <label for="latitude">Latitude:</label>
+        <input type="text" id="latitude" placeholder="Enter latitude"><br>
+        <label for="longitude">Longitude:</label>
+        <input type="text" id="longitude" placeholder="Enter longitude"><br>
+        <button onclick="showMap()">Add Pothole Location</button>
+        <button onclick="clearSelectedMarker()">Clear Pothole</button>
+    </div>
+
+    <div id="topCenter">
+        <div class="input-container">
+            <label for="sourceLat">From Latitude:</label>
+            <input type="text" id="sourceLat" placeholder="Enter source latitude">
+            <label for="sourceLng">From Longitude:</label>
+            <input type="text" id="sourceLng" placeholder="Enter source longitude">
+        </div>
+        <div class="input-container">
+            <label for="destinationLat">To Latitude:</label>
+            <input type="text" id="destinationLat" placeholder="Enter destination latitude">
+            <label for="destinationLng">To Longitude:</label>
+            <input type="text" id="destinationLng" placeholder="Enter destination longitude">
+        </div>
+        <div class="input-container">
+            <button id="searchButton" onclick="findRoute()">
+                <img src="https://th.bing.com/th?id=OIP.A2spgxgAo9hlKteaQpzEkwHaHa&w=250&h=250&c=8&rs=1&qlt=90&o=6&dpr=1.5&pid=3.1&rm=2" alt="Search">
+            </button>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+    <script>
+        var map;
+        var routingControl;
+        var adminLoggedIn = false;
+        var markers = [];
+
+        function initMap() {
+            map = L.map('map').setView([0, 0], 2);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+        }
+
+        function showMap() {
+            var latitude = parseFloat(document.getElementById('latitude').value);
+            var longitude = parseFloat(document.getElementById('longitude').value);
+
+            if (isNaN(latitude) || isNaN(longitude)) {
+                alert("Please enter valid latitude and longitude values.");
+                return;
+            }
+
+            if (!map) {
+                initMap();
+            }
+
+            var redIcon = L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                tooltipAnchor: [16, -28],
+                shadowSize: [41, 41]
+            });
+
+            var marker = L.marker([latitude, longitude], { icon: redIcon }).addTo(map)
+                .bindPopup('Pothole: <br> Latitude: ' + latitude + '<br>Longitude: ' + longitude)
+                .openPopup();
+
+            markers.push(marker);
+
+            map.panTo([latitude, longitude]);
+        }
+
+        function clearSelectedMarker() {
+            var selectedMarker = markers.find(marker => marker._icon.classList.contains('leaflet-marker-selected'));
+
+            if (selectedMarker) {
+                selectedMarker.remove();
+                markers.splice(markers.indexOf(selectedMarker), 1);
+            }
+        }
+
+        document.getElementById('map').addEventListener('click', function (e) {
+            markers.forEach(function (marker) {
+                if (e.target === marker._icon) {
+                    marker._icon.classList.toggle('leaflet-marker-selected');
+                } else {
+                    marker._icon.classList.remove('leaflet-marker-selected');
+                }
+            });
+        });
+
+        function toggleAdmin() {
+    var adminBtn = document.getElementById('adminBtn');
+    var inputFields = document.getElementById('inputFields');
+    var topCenter = document.getElementById('topCenter');
+
+    if (!adminLoggedIn) {
+        var username = prompt("Enter username:");
+        var password = prompt("Enter password:");
+
+        if (username === "vinayak" && password === "8618") {
+            adminLoggedIn = true;
+            adminBtn.textContent = 'Admin Logout';
+            inputFields.classList.remove('hidden');
+            topCenter.classList.add('hidden'); // hide the topCenter section
+        } else {
+            alert("Invalid username or password. Access denied.");
+        }
+    } else {
+        adminLoggedIn = false;
+        adminBtn.textContent = 'Admin Login';
+        inputFields.classList.add('hidden');
+        topCenter.classList.remove('hidden'); // show the topCenter section
+    }
+}
+
+
+        function findRoute() {
+            var sourceLat = parseFloat(document.getElementById('sourceLat').value.trim());
+            var sourceLng = parseFloat(document.getElementById('sourceLng').value.trim());
+            var destinationLat = parseFloat(document.getElementById('destinationLat').value.trim());
+            var destinationLng = parseFloat(document.getElementById('destinationLng').value.trim());
+
+            if (isNaN(sourceLat) || isNaN(sourceLng) || isNaN(destinationLat) || isNaN(destinationLng)) {
+                alert('Please enter valid latitude and longitude values.');
+                return;
+            }
+
+            var sourceLatLng = L.latLng(sourceLat, sourceLng);
+            var destinationLatLng = L.latLng(destinationLat, destinationLng);
+
+            if (routingControl) {
+                map.removeControl(routingControl);
+            }
+
+            routingControl = L.Routing.control({
+                waypoints: [
+                    sourceLatLng,
+                    destinationLatLng
+                ]
+            }).on('routesfound', function (e) {
+                var routes = e.routes;
+                console.log(routes);
+            }).addTo(map);
+        }
+    </script>
+
+    <!-- Initialize the map -->
+    <script>
+        initMap();
+    </script>
+</body>
+
+</html>
